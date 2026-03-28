@@ -1,0 +1,85 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Meetings Dashboard{% endblock %}
+
+{% block content %}
+<div style="padding-top: 64px;">
+    <h1 class="page-title">Meetings</h1>
+    <p class="page-subtitle">Start a video conference or join an existing session.</p>
+
+    <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 30px; margin-top: 30px;">
+        <!-- Start/Join Actions -->
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+            <div class="glass-card" style="padding: 30px; border-radius: 16px; background: rgba(35, 131, 226, 0.05); border: 1px solid rgba(35, 131, 226, 0.2);">
+                <div style="display: flex; align-items: flex-start; gap: 20px;">
+                    <div style="padding: 12px; border-radius: 12px; background: #2383e2; color: white;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+                    </div>
+                    <div style="flex: 1;">
+                        <h3 style="margin: 0 0 8px 0; color: var(--text-color);">Start a Meeting</h3>
+                        <p style="margin: 0 0 20px 0; color: var(--text-muted); font-size: 14px; line-height: 1.5;">Create a new secure video room and invite your team members. No scheduling required.</p>
+                        <form action="{{ url_for('create_meeting') }}" method="POST">
+                            <button type="submit" class="btn btn-primary" style="display: flex; align-items: center; gap: 8px;">
+                                <span>Start New Meeting</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card" style="padding: 30px; border-radius: 16px;">
+                <h3 style="margin: 0 0 20px 0; color: var(--text-color);">Join with ID</h3>
+                <form action="{{ url_for('join_meeting') }}" method="POST" style="display: flex; gap: 12px;">
+                    <input type="text" name="room_id" placeholder="Enter 9-character ID (e.g. a1b2c3d4e)" required 
+                           style="flex: 1; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-color); font-family: monospace;">
+                    <button type="submit" class="btn btn-outline" style="padding: 0 24px;">Join</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Recent Meetings -->
+        <div>
+            <h3 style="margin: 0 0 20px 0; font-size: 18px; color: var(--text-color);">Recent Sessions</h3>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                {% if meetings %}
+                    {% for m in meetings %}
+                    <div class="glass-card" style="padding: 16px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; transition: transform 0.2s;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 8px; height: 8px; border-radius: 50%; background: #2383e2;"></div>
+                            <div>
+                                <div style="font-weight: 600; font-size: 14px; color: var(--text-color); font-family: monospace;">{{ m.meeting_id }}</div>
+                                <div style="font-size: 12px; color: var(--text-muted);">{{ m.created_at.strftime('%b %d, %I:%M %p') }}</div>
+                            </div>
+                        </div>
+                        <form action="{{ url_for('join_meeting') }}" method="POST">
+                            <input type="hidden" name="room_id" value="{{ m.meeting_id }}">
+                            <button type="submit" class="btn-icon" style="background: none; border: none; color: #2383e2; cursor: pointer; padding: 4px;" title="Rejoin">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                            </button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="text-align: center; padding: 40px; color: var(--text-muted); border: 1px dashed var(--border-color); border-radius: 12px;">
+                        No recent meetings found. Start one to see it here!
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .glass-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .glass-card:hover {
+        border-color: rgba(35, 131, 226, 0.4);
+    }
+    .btn-icon:hover {
+        transform: scale(1.1);
+    }
+</style>
+{% endblock %}

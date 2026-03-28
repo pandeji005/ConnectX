@@ -1,0 +1,36 @@
+{% extends "dashboard_base.html" %}
+{% block title %}View Files{% endblock %}
+{% block content %}
+<h1 class="page-title">Workspace Files 📁</h1>
+<p class="page-subtitle">All files uploaded to ConnectX.</p>
+
+<div style="margin-top: 24px;">
+    {% if files %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+        {% for file in files %}
+        <div style="border: 1px solid var(--border-color); padding: 16px; border-radius: 6px; background: var(--hover-bg); display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 6px; color: var(--text-muted);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                </div>
+                <div style="font-weight: 500; word-break: break-all; font-size: 14px;">{{ file.filename }}</div>
+            </div>
+            <div style="font-size: 12px; color: var(--text-muted);">Uploaded: {{ file.uploaded_at.strftime('%Y-%m-%d %H:%M') if file.uploaded_at else 'Unknown' }}</div>
+            <div style="display: flex; gap: 8px; margin-top: auto;">
+                <a href="{{ url_for('view_file', id=file.id) }}" target="_blank" class="btn" style="flex: 1; text-align: center; border: 1px solid var(--border-color); font-size: 13px; text-decoration: none; color: var(--text-color); padding: 6px;">View</a>
+                <a href="{{ url_for('delete_file', id=file.id) }}" class="btn" style="flex: 1; text-align: center; background: rgba(255, 68, 68, 0.1); border: 1px solid #ff4444; color: #ff4444; font-size: 13px; text-decoration: none; padding: 6px;">Delete</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="padding: 32px; border: 1px solid var(--border-color); border-radius: 6px; text-align: center; color: var(--text-muted);">
+        <p>No files uploaded yet.</p>
+        <a href="{{ url_for('upload_page') }}" class="btn btn-primary" style="margin-top: 12px; display: inline-block;">Upload First File</a>
+    </div>
+    {% endif %}
+</div>
+<div style="margin-top: 32px;">
+    <a href="{{ url_for('dashboard') }}" style="color: var(--text-muted); text-decoration: none; font-size: 14px;">← Back to Dashboard</a>
+</div>
+{% endblock %}

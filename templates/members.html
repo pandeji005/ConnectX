@@ -1,0 +1,87 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Team Members — ConnectX{% endblock %}
+
+{% block content %}
+<div style="padding-top: 64px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <div>
+        <h1 class="page-title" style="margin: 0;">Team Members</h1>
+        <p class="page-subtitle" style="margin: 4px 0 0 0;">View all members of the ConnectX workspace.</p>
+    </div>
+</div>
+
+<div class="members-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+    {% for member in members %}
+    <div class="member-card {% if member.role == 'team_leader' %}leader-card{% endif %}" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 16px; transition: all 0.2s ease; position: relative; overflow: hidden;">
+        {% if member.role == 'team_leader' %}
+        <div class="leader-banner">🏆 TEAM LEAD</div>
+        {% endif %}
+        <div class="member-avatar {% if member.role == 'team_leader' %}leader-avatar-special{% endif %}" style="width: 48px; height: 48px; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 600; flex-shrink: 0;">
+            {{ member.username[0]|upper }}
+        </div>
+        <div style="flex: 1; min-width: 0;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 2px;">
+                <span style="font-weight: 600; font-size: 15px; color: var(--text-color); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ member.username }}</span>
+                {% if member.role == 'team_leader' %}
+                <span class="role-tag team-lead-tag">Leader</span>
+                {% endif %}
+            </div>
+            <div style="font-size: 12px; color: var(--text-muted); word-break: break-all;">{{ member.email }}</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; text-transform: capitalize;">{{ member.role.replace('_', ' ') }}</div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    .member-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+        border-color: #2383e2;
+    }
+    .member-avatar {
+        background: linear-gradient(135deg, #2383e2, #5c6bf2);
+    }
+    .leader-avatar-special {
+        background: linear-gradient(135deg, #ffd700, #ff8c00) !important;
+        box-shadow: 0 0 15px rgba(255,215,0,0.3);
+    }
+    .leader-card {
+        border: 2px solid #ffd70080 !important;
+        background: linear-gradient(to right, var(--bg-secondary), rgba(255, 215, 0, 0.03)) !important;
+        padding-top: 36px !important;
+    }
+    .leader-card:hover {
+        border-color: #ffd700 !important;
+        box-shadow: 0 10px 25px rgba(255, 215, 0, 0.1) !important;
+    }
+    .leader-banner {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(90deg, #ffd700, #ff8c00);
+        color: #000;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        padding: 4px 0;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .role-tag {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 2px 8px;
+        border-radius: 20px;
+        letter-spacing: 0.05em;
+    }
+    .team-lead-tag {
+        background: #ffd70020;
+        color: #b8860b;
+        border: 1px solid #ffd70040;
+    }
+</style>
+</div> <!-- End of 64px padding-top div -->
+{% endblock %}

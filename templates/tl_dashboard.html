@@ -1,0 +1,229 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Team Lead Dashboard{% endblock %}
+
+{% block content %}
+<div style="padding-top: 64px;">
+    <h1 class="page-title">Team Lead Dashboard</h1>
+    <p class="page-subtitle">Overview of all team activities and management.</p>
+
+<div style="display: flex; gap: 16px; margin-bottom: 30px;">
+    {% set overdue = tasks|selectattr('deadline')|rejectattr('deadline', 'none')|selectattr('deadline', 'lt',
+    today)|list %}
+    {% set due_today = tasks|selectattr('deadline')|rejectattr('deadline', 'none')|selectattr('deadline', 'equalto',
+    today)|list %}
+
+    <div
+        style="flex: 1; padding: 20px; border-radius: 8px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-left: 4px solid #ff4444; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <h4 style="margin: 0 0 10px 0; color: var(--text-secondary);">Overdue Tasks</h4>
+        <div style="font-size: 2em; font-weight: bold; color: var(--text-primary);">{{ overdue|length }}</div>
+    </div>
+
+    <div
+        style="flex: 1; padding: 20px; border-radius: 8px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-left: 4px solid #e3a008; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <h4 style="margin: 0 0 10px 0; color: var(--text-secondary);">Due Today</h4>
+        <div style="font-size: 2em; font-weight: bold; color: var(--text-primary);">{{ due_today|length }}</div>
+    </div>
+</div>
+
+<div style="margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+    <div style="border: 1px solid var(--border-color); padding: 24px; border-radius: 6px; background: var(--hover-bg);">
+        <h3 style="margin-top: 0; margin-bottom: 16px;">Create Project</h3>
+        <form method="post" action="{{ url_for('create_project') }}"
+            style="display: flex; flex-direction: column; gap: 12px;">
+            <input type="text" name="project_name" placeholder="Project Name" required
+                style="padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-color);">
+            <textarea name="description" placeholder="Project Description" rows="3"
+                style="padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-color); resize: none;"></textarea>
+            <button type="submit" class="btn btn-primary" style="align-self: flex-start; margin-top: 8px;">+ Add
+                Project</button>
+        </form>
+    </div>
+
+    <div style="border: 1px solid var(--border-color); padding: 24px; border-radius: 6px; background: var(--hover-bg);">
+        <h3 style="margin-top: 0; margin-bottom: 16px;">Assign Task</h3>
+        <form method="post" action="{{ url_for('create_task') }}"
+            style="display: flex; flex-direction: column; gap: 12px;">
+            <input type="text" name="title" placeholder="Task Title" required
+                style="padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-color);">
+            <textarea name="description" placeholder="Task Description" rows="2"
+                style="padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-color); resize: none;"></textarea>
+
+            <div style="display: flex; gap: 12px;">
+                <select name="assigned_to" required
+                    style="flex: 1; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-color);">
+                    <option value="">Assign to...</option>
+                    {% for u in users %}
+                    <option value="{{ u.id }}">{{ u.username }}</option>
+                    {% endfor %}
+                </select>
+                <select name="project_id"
+                    style="flex: 1; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-color);">
+                    <option value="">Select Project</option>
+                    {% for p in projects %}
+                    <option value="{{ p.id }}">{{ p.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary" style="align-self: flex-start; margin-top: 8px;">Assign
+                Task</button>
+        </form>
+    </div>
+</div>
+
+<h3 style="margin-top: 40px; margin-bottom: 16px;">📚 Active Projects</h3>
+{% if projects %}
+<div
+    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-bottom: 40px;">
+    {% for project in projects %}
+    <div class="project-card-link" onclick="navigateToProject('{{ project.id }}');">
+        <div style="font-weight: 600; font-size: 16px; margin-bottom: 6px; color: var(--text-color);">{{ project.title
+            }}</div>
+        <div style="font-size: 13px; color: var(--text-muted); line-height: 1.4;">{{ project.description }}</div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div
+    style="color: var(--text-muted); font-size: 14px; padding: 24px 0; background: var(--bg-secondary); border-radius: 8px; text-align: center; border: 1px dashed var(--border-color); margin-bottom: 30px;">
+    No projects active. Create one above to get started!
+</div>
+{% endif %}
+
+<h3 style="margin-top: 40px; margin-bottom: 16px;">All Tasks</h3>
+<div class="kanban-board" style="display: flex; gap: 20px; overflow-x: auto; padding-bottom: 20px;">
+    <!-- To Do -->
+    <div class="kanban-col" data-status="To Do"
+        style="flex: 1; min-width: 280px; background: var(--bg-secondary); border-radius: 8px; padding: 15px;"
+        ondrop="dropTask(event)" ondragover="allowDropTask(event)">
+        <h4 style="margin-bottom: 15px; display: flex; justify-content: space-between;">To Do <span
+                style="background: #a9a9a9; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8em;">{{
+                tasks|selectattr('status', 'equalto', 'To Do')|list|length }}</span></h4>
+        {% for task in tasks if task.status == 'To Do' %}
+        <div class="kanban-item" draggable="true" ondragstart="dragTask(event, '{{ task.id }}')"
+            style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; margin-bottom: 10px; cursor: grab; position: relative;">
+            <div style="font-weight: 500; font-size: 14px; margin-bottom: 5px;">{{ task.title }}</div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">{{ task.description }}</div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">Assignee: User #{{
+                task.assigned_to }}</div>
+            <div style="display: flex; gap: 8px; font-size: 12px;">
+                <a href="{{ url_for('edit_task', id=task.id) }}"
+                    style="color: var(--primary-color); text-decoration: none;">Edit</a>
+                <a href="{{ url_for('delete_task', id=task.id) }}"
+                    style="color: #ff4444; text-decoration: none;">Delete</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Ongoing -->
+    <div class="kanban-col" data-status="In Progress"
+        style="flex: 1; min-width: 280px; background: var(--bg-secondary); border-radius: 8px; padding: 15px;"
+        ondrop="dropTask(event)" ondragover="allowDropTask(event)">
+        <h4 style="margin-bottom: 15px; display: flex; justify-content: space-between;">Ongoing <span
+                style="background: #e3a008; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8em;">{{
+                tasks|selectattr('status', 'equalto', 'In Progress')|list|length }}</span></h4>
+        {% for task in tasks if task.status == 'In Progress' %}
+        <div class="kanban-item" draggable="true" ondragstart="dragTask(event, '{{ task.id }}')"
+            style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; margin-bottom: 10px; cursor: grab; position: relative;">
+            <div style="font-weight: 500; font-size: 14px; margin-bottom: 5px;">{{ task.title }}</div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">{{ task.description }}</div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">Assignee: User #{{
+                task.assigned_to }}</div>
+            <div style="display: flex; gap: 8px; font-size: 12px;">
+                <a href="{{ url_for('edit_task', id=task.id) }}"
+                    style="color: var(--primary-color); text-decoration: none;">Edit</a>
+                <a href="{{ url_for('delete_task', id=task.id) }}"
+                    style="color: #ff4444; text-decoration: none;">Delete</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Finished -->
+    <div class="kanban-col" data-status="Done"
+        style="flex: 1; min-width: 280px; background: var(--bg-secondary); border-radius: 8px; padding: 15px;"
+        ondrop="dropTask(event)" ondragover="allowDropTask(event)">
+        <h4 style="margin-bottom: 15px; display: flex; justify-content: space-between;">Finished <span
+                style="background: #31c48d; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8em;">{{
+                tasks|selectattr('status', 'equalto', 'Done')|list|length }}</span></h4>
+        {% for task in tasks if task.status == 'Done' %}
+        <div class="kanban-item" draggable="true" ondragstart="dragTask(event, '{{ task.id }}')"
+            style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; margin-bottom: 10px; cursor: grab; position: relative;">
+            <div style="font-weight: 500; font-size: 14px; margin-bottom: 5px;">{{ task.title }}</div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">{{ task.description }}</div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">Assignee: User #{{
+                task.assigned_to }}</div>
+            <div style="display: flex; gap: 8px; font-size: 12px;">
+                <a href="{{ url_for('edit_task', id=task.id) }}"
+                    style="color: var(--primary-color); text-decoration: none;">Edit</a>
+                <a href="{{ url_for('delete_task', id=task.id) }}"
+                    style="color: #ff4444; text-decoration: none;">Delete</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 40px; margin-bottom: 16px;">
+    <h3 style="margin: 0;">⏱️ Recent Activity</h3>
+    {% if activities %}
+    <form action="{{ url_for('clear_activities') }}" method="POST"
+        onsubmit="return confirm('Global Activity history will be permanently cleared. Continue?');">
+        <button type="submit" class="btn btn-outline"
+            style="font-size:12px; padding:6px 12px; height:fit-content; border-color: rgba(255,165,0,0.2); color:#e3a008;">Clear
+            all</button>
+    </form>
+    {% endif %}
+</div>
+<div
+    style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; max-height: 300px; overflow-y: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+    {% for act in activities %}
+    <div
+        style="display: flex; gap: 15px; align-items: flex-start; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+        <div
+            style="background: var(--primary-color); color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 12px; font-weight: bold;">
+            Act</div>
+        <div style="flex: 1;">
+            <div style="font-size: 0.95em; margin-bottom: 4px; color: var(--text-primary);">{{ act.action }}</div>
+            <div style="font-size: 0.8em; color: var(--text-muted);">{{ act.timestamp }} • User ID: {{ act.user_id }}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div style="color: var(--text-muted); font-size: 0.9em; text-align: center; padding: 20px;">No recent activity in
+        projects.</div>
+    {% endfor %}
+</div>
+
+<div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border-color); display: flex; gap: 16px;">
+    <a href="{{ url_for('upload_page') }}" class="btn"
+        style="border: 1px solid var(--border-color); background: var(--hover-bg); color: var(--text-color); text-decoration: none;">Upload
+        File</a>
+    <a href="{{ url_for('view_files') }}" class="btn"
+        style="border: 1px solid var(--border-color); background: var(--hover-bg); color: var(--text-color); text-decoration: none;">View
+        Files</a>
+</div>
+</div> <!-- End of 64px padding-top div -->
+
+<style>
+    .project-card-link {
+        border: 1px solid var(--border-color);
+        padding: 20px;
+        border-radius: 8px;
+        background: var(--hover-bg);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border-left: 4px solid var(--primary-color);
+    }
+    .project-card-link:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+</style>
+
+<script>
+    function navigateToProject(projectId) {
+        window.location.href = `/workspace/project/${projectId}`;
+    }
+</script>
+{% endblock %}

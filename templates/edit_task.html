@@ -1,0 +1,25 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Edit Task{% endblock %}
+{% block content %}
+<h1 class="page-title" style="margin-bottom: 24px;">Edit Task: {{ task.title }}</h1>
+<div style="max-width: 600px; border: 1px solid var(--border-color); padding: 24px; border-radius: 8px; background: var(--bg-color);">
+    <form method="post" action="{{ url_for('edit_task', id=task.id) }}" style="display: flex; flex-direction: column; gap: 16px;">
+        <div>
+            <label style="font-weight: 500; font-size: 14px; margin-bottom: 6px; display: block;">Title</label>
+            <input type="text" name="title" value="{{ task.title }}" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-color);">
+        </div>
+        <div>
+            <label style="font-weight: 500; font-size: 14px; margin-bottom: 6px; display: block;">Description</label>
+            <textarea name="description" rows="4" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-color); resize: vertical;">{{ task.description }}</textarea>
+        </div>
+        <div>
+            <label style="font-weight: 500; font-size: 14px; margin-bottom: 6px; display: block;">Priority</label>
+            <input type="text" name="priority" value="{{ task.priority }}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-color);">
+        </div>
+        <div style="display: flex; gap: 12px; margin-top: 8px;">
+            <button type="submit" class="btn btn-primary" style="flex: 1;">Save Changes</button>
+            <a href="{{ url_for('tl_dashboard') }}" class="btn" style="flex: 1; text-align: center; border: 1px solid var(--border-color); text-decoration: none; color: var(--text-color);">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

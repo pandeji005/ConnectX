@@ -1,0 +1,314 @@
+{% extends "dashboard_base.html" %}
+{% block title %}{{ project.title }} — Workspace{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 32px; margin-top: 48px;">
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+        <a href="{{ url_for('workspace') }}" style="color: var(--text-muted); text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 6px; width: fit-content;" class="back-link">
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            Back to Workspace
+        </a>
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+            <h1 class="page-title" style="margin: 0;">{{ project.title }}</h1>
+            <p class="page-subtitle" style="margin: 8px 0 0 0; max-width: 800px; line-height: 1.6;">{{ project.description }}</p>
+        </div>
+    </div>
+</div>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+    <h3 style="font-size: 18px; font-weight: 600; color: var(--text-color);">Project Tasks</h3>
+    {% if session['role'] == 'team_leader' %}
+    <div style="display: flex; gap: 8px;">
+        <button onclick="showAddTaskModal()" class="btn btn-primary" style="font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 6px; display: flex; align-items: center; gap: 6px; border: none; cursor: pointer; font-family: inherit;">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add Task
+        </button>
+        <button onclick="showManageProjectModal()" class="btn btn-outline" style="font-size: 13px; font-weight: 600; padding: 6px 12px; border: 1px solid var(--border-color); border-radius: 6px; display: flex; align-items: center; gap: 6px; cursor: pointer; background: transparent; color: var(--text-color); font-family: inherit;">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4L18.5 2.5z"></path></svg>
+            Manage Project
+        </button>
+        <a href="{{ url_for('delete_project', project_id=project.id) }}" class="btn btn-outline" style="color: #ff5a5f; border-color: rgba(255,90,95,0.2); text-decoration: none; font-size: 13px; padding: 6px 12px; border-radius: 6px; display: flex; align-items: center; gap: 6px; font-weight: 600;" onclick="return confirm('Delete this project and all its tasks?');">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            Delete Project
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<div style="border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; background: var(--bg-secondary); box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+        <thead>
+            <tr style="border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.02);">
+                <th style="padding: 16px; font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; width: 40%;">Task Name</th>
+                <th style="padding: 16px; font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em;">Assignee</th>
+                <th style="padding: 16px; font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em;">Status</th>
+                <th style="padding: 16px; font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em;">Priority</th>
+                <th style="padding: 16px; font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; text-align: right;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for task in tasks %}
+            <tr class="task-row" style="border-bottom: 1px solid var(--border-color); transition: background 0.2s;">
+                <td style="padding: 16px;">
+                    <div style="font-weight: 600; font-size: 15px; color: var(--text-color);">{{ task.title }}</div>
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 300px;">{{ task.description or 'No description provided.' }}</div>
+                </td>
+                <td style="padding: 16px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        {% if task.assigned_to and user_map[task.assigned_to] %}
+                        <div style="width: 24px; height: 24px; border-radius: 50%; background: #2383e2; display: flex; align-items: center; justify-content: center; font-size: 10px; color: white; font-weight: 700;">{{ user_map[task.assigned_to][0]|upper }}</div>
+                        <span style="font-size: 13px; color: var(--text-color);">{{ user_map[task.assigned_to] }}</span>
+                        {% else %}
+                        <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--hover-bg); border: 1px dashed var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--text-muted);">?</div>
+                        <span style="font-size: 13px; color: var(--text-muted); font-style: italic;">Unassigned</span>
+                        {% if session['role'] == 'team_leader' %}
+                        <button onclick="showAssignMemberModal('{{ task.id }}', '{{ task.title }}')" class="assign-btn" title="Assign Member">
+                            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="17" y1="11" x2="23" y2="11"></line></svg>
+                        </button>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                </td>
+                <td style="padding: 16px;">
+                    {% if task.status == 'Done' %}
+                        <span class="status-pill status-done">Finished</span>
+                    {% elif task.status == 'In Progress' %}
+                        <span class="status-pill status-progress">Ongoing</span>
+                    {% else %}
+                        <span class="status-pill status-todo">To Do</span>
+                    {% endif %}
+                </td>
+                <td style="padding: 16px;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span class="priority-dot {% if task.priority == 'High' %}priority-high{% elif task.priority == 'Medium' %}priority-medium{% else %}priority-normal{% endif %}" style="width: 6px; height: 6px; border-radius: 50%;"></span>
+                        <span style="font-size: 13px; color: var(--text-color);">{{ task.priority or 'Normal' }}</span>
+                    </div>
+                </td>
+                <td style="padding: 16px; text-align: right;">
+                    <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
+                        <a href="{{ url_for('update_task_status', id=task.id, status='In_Progress') }}" class="action-btn" title="Mark as Ongoing">
+                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        </a>
+                        <a href="{{ url_for('update_task_status', id=task.id, status='Done') }}" class="action-btn complete" title="Mark as Finished">
+                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                        </a>
+                        
+                        {% if session['role'] == 'team_leader' %}
+                        <div style="width: 1px; height: 16px; background: var(--border-color); margin: 0 4px;"></div>
+                        <a href="{{ url_for('delete_task', id=task.id) }}" class="action-btn delete" title="Delete Task" onclick="return confirm('Deleted tasks cannot be recovered. Continue?')">
+                            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </a>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="padding: 60px; text-align: center; color: var(--text-muted);">
+                    <div style="margin-bottom: 12px;">
+                        <svg viewBox="0 0 24 24" width="40" height="40" stroke="currentColor" stroke-width="1.5" fill="none" style="opacity: 0.3;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                    </div>
+                    No tasks found in this project.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    function showAddTaskModal() {
+        const content = `
+            <div class="modal-header">
+                <h3>Create New Task</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <form action="{{ url_for('create_task') }}" method="POST">
+                <input type="hidden" name="project_id" value="{{ project.id }}">
+                <input type="hidden" name="redirect_to" value="{{ url_for('project_tasks', project_id=project.id) }}">
+                <div class="modal-body">
+                    <div class="modal-form-group">
+                        <label>Task Title</label>
+                        <input type="text" name="title" class="modal-input" placeholder="e.g. Design Landing Page" required>
+                    </div>
+                    <div class="modal-form-group">
+                        <label>Assign to (Optional)</label>
+                        <select name="assigned_to" class="modal-input">
+                            <option value="">Unassigned</option>
+                            {% for u in users %}
+                            <option value="{{ u.id }}">{{ u.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="modal-form-group">
+                            <label>Priority</label>
+                            <select name="priority" class="modal-input">
+                                <option value="Low">Low</option>
+                                <option value="Medium">Medium</option>
+                                <option value="High">High</option>
+                            </select>
+                        </div>
+                        <div class="modal-form-group">
+                            <label>Deadline</label>
+                            <input type="date" name="deadline" class="modal-input">
+                        </div>
+                    </div>
+                    <div class="modal-form-group">
+                        <label>Description</label>
+                        <textarea name="description" class="modal-input modal-textarea" placeholder="Detail the task..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeModal()" style="border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 16px; cursor: pointer;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="border: none; border-radius: 6px; padding: 8px 16px; cursor: pointer;">Add Task</button>
+                </div>
+            </form>
+        `;
+        openModal(content);
+    }
+
+    function showAssignMemberModal(taskId, taskTitle) {
+        const content = `
+            <div class="modal-header">
+                <h3>Assign Task</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <form action="/assign_task/${taskId}" method="POST">
+                <div class="modal-body">
+                    <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 20px;">Delegate <strong>${taskTitle}</strong> to a team member.</p>
+                    <div class="modal-form-group">
+                        <label>Select Team Member</label>
+                        <select name="user_id" class="modal-input" required>
+                            <option value="" disabled selected>Choose member...</option>
+                            {% for u in users %}
+                            <option value="{{ u.id }}">{{ u.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeModal()" style="border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 16px; cursor: pointer;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="border: none; border-radius: 6px; padding: 8px 16px; cursor: pointer;">Assign Member</button>
+                </div>
+            </form>
+        `;
+        openModal(content);
+    }
+
+    function showManageProjectModal() {
+        const content = `
+            <div class="modal-header">
+                <h3>Manage Project</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 20px;">Project modification is currently in read-only mode for this dashboard. Use the deletion option for complete removal.</p>
+                <div class="modal-form-group">
+                    <label>Current Title</label>
+                    <input type="text" class="modal-input" value="{{ project.title }}" disabled>
+                </div>
+                <div class="modal-form-group">
+                    <label>Current Description</label>
+                    <textarea class="modal-input modal-textarea" disabled>{{ project.description }}</textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="closeModal()" style="border: none; border-radius: 6px; padding: 8px 16px; cursor: pointer;">Close</button>
+            </div>
+        `;
+        openModal(content);
+    }
+</script>
+
+<style>
+    .back-link:hover {
+        color: var(--primary-color) !important;
+        transform: translateX(-4px);
+        transition: all 0.2s ease;
+    }
+    .task-row:hover {
+        background: rgba(0,0,0,0.01);
+    }
+    .status-pill {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 4px 10px;
+        border-radius: 20px;
+        letter-spacing: 0.05em;
+        white-space: nowrap;
+    }
+    .status-done {
+        background: #31c48d20;
+        color: #31c48d;
+        border: 1px solid #31c48d40;
+    }
+    .status-progress {
+        background: #e3a00820;
+        color: #e3a008;
+        border: 1px solid #e3a00840;
+    }
+    .status-todo {
+        background: #a9a9a920;
+        color: #a9a9a9;
+        border: 1px solid #a9a9a940;
+    }
+    .priority-high {
+        background: #ff5a5f !important;
+    }
+    .priority-medium {
+        background: #ffcc00 !important;
+    }
+    .priority-normal {
+        background: #a9a9a9 !important;
+    }
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        transition: all 0.2s;
+        border: 1px solid var(--border-color);
+        background: var(--bg-color);
+        text-decoration: none;
+    }
+    .action-btn:hover {
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+        background: rgba(35,131,226,0.05);
+    }
+    .action-btn.complete:hover {
+        color: #31c48d;
+        border-color: #31c48d;
+        background: rgba(49,196,141,0.05);
+    }
+    .action-btn.delete:hover {
+        color: #ff5a5f;
+        border-color: #ff5a5f;
+        background: rgba(255,90,95,0.05);
+    }
+    .assign-btn {
+        background: transparent;
+        border: none;
+        color: #2383e2;
+        cursor: pointer;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        transition: all 0.2s;
+        margin-left: 4px;
+    }
+    .assign-btn:hover {
+        background: rgba(35,131,226,0.1);
+        transform: scale(1.1);
+    }
+</style>
+{% endblock %}

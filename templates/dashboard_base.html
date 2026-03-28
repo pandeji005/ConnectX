@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dashboard — ConnectX{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v=5) }}">
+    <!-- Anti-flicker: apply theme before render -->
+    <script>
+        (function() {
+            var t = localStorage.getItem('theme') || 'light';
+            if (t === 'dark') {
+                document.documentElement.classList.add('dark-mode');
+                document.documentElement.classList.add('dark-mode-pending');
+            }
+        })();
+    </script>
+    <!-- ApexCharts for Reports -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+</head>
+<body>
+    <!-- Inline anti-flicker for body -->
+    <script>(function(){var t=localStorage.getItem('theme')||'light';if(t==='dark')document.body.classList.add('dark-mode');})();</script>
+
+    <div class="dashboard-layout">
+        <!-- ===== SIDEBAR ===== -->
+        <div class="sidebar" id="app-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo" id="sidebar-logo" title="ConnectX">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
+                        <path d="M3 12 V 7 L 12 2 L 21 7 V 12" stroke="#00e5ff" />
+                        <path d="M21 12 V 17 L 12 22 L 3 17 V 12" stroke="#5c6bf2" />
+                    </svg>
+                    <span class="logo-text">ConnectX</span>
+                </div>
+                <button class="sidebar-collapse-btn" id="sidebar-collapse-btn" title="Collapse sidebar">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('tl_dashboard') if session.get('role') == 'team_leader' else url_for('dashboard') }}" class="nav-item" title="Home">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    <span class="nav-label">Home</span>
+                </a>
+                <a href="{{ url_for('workspace') }}" class="nav-item" title="Workspace">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+                    <span class="nav-label">Workspace</span>
+                </a>
+                <a href="{{ url_for('members') }}" class="nav-item" title="Members">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    <span class="nav-label">Members</span>
+                </a>
+                <a href="{{ url_for('global_chat') }}" class="nav-item" title="Global Chat">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <span class="nav-label">Global Chat</span>
+                </a>
+
+                <!-- Notifications -->
+                <a href="{{ url_for('notifications_page') }}" class="nav-item" title="Notifications">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    <span class="nav-label">Notifications</span>
+                    {% if user_notifications|length > 0 %}
+                    <span class="notif-badge">{{ user_notifications|length }}</span>
+                    {% endif %}
+                </a>
+
+                <a href="{{ url_for('meetings_dashboard') }}" class="nav-item" title="Meetings">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+                    <span class="nav-label">Meetings</span>
+                </a>
+
+                <a href="{{ url_for('reports') }}" class="nav-item" title="Reports">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+                    <span class="nav-label">Reports</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="{{ url_for('logout') }}" class="nav-item logout-item" title="Logout">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    <span class="nav-label">Logout</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- ===== MAIN CONTENT ===== -->
+        <div class="main-content" style="position: relative;">
+            <!-- Top Actions Area -->
+            <div class="top-actions-area">
+                <button class="theme-toggle" title="Toggle Theme" aria-label="Toggle Theme" style="width: 36px; height: 36px; padding: 8px; border-radius: 50%; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-color); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: all 0.2s ease;">
+                    <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 100%; height: 100%; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                    <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 100%; height: 100%; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                </button>
+                <div class="profile-dropdown-container">
+                    <button class="profile-icon-btn" id="profile-drop-toggle" title="{{ session.user }}">
+                        {{ session.user[0] if session.user else 'U' }}
+                    </button>
+                    <div class="profile-dropdown-menu" id="profile-dropdown">
+                        <div class="dropdown-header">
+                            <span class="dropdown-user-name">{{ session.user }}</span>
+                            <span class="dropdown-user-role">{{ 'Team Lead' if session.role == 'team_leader' else 'Team Member' }}</span>
+                        </div>
+                        <a href="{{ url_for('tl_dashboard') if session.get('role') == 'team_leader' else url_for('dashboard') }}" class="dropdown-item">
+                            <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                            My Dashboard
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="{{ url_for('logout') }}" class="dropdown-item logout">
+                            <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                            Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- Chat Icon -->
+    <div id="chat-icon" onclick="toggleChat()" title="AI Assistant">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </div>
+
+    <!-- AI Chatbox -->
+    <div id="chatbox">
+        <div class="chat-header">
+            <span>AI Assistant</span>
+            <button onclick="toggleChat()">&#10005;</button>
+        </div>
+        <div class="chat-body" id="chat-body"></div>
+        <div class="chat-input" style="padding: 10px; border-top: 1px solid var(--border-color); display: flex;">
+            <input type="text" id="bot-chat-input" placeholder="Type a command..." autocomplete="off" style="flex:1; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color); outline:none; background:var(--bg-color); color:var(--text-color); font-size:13px;">
+            <button onclick="sendBotMessage()" style="margin-left:8px; padding:8px 14px; border-radius:6px;" class="btn-primary">Send</button>
+        </div>
+    </div>
+
+    <!-- Modal System Overlay -->
+    <div id="modal-overlay" class="modal-overlay" onclick="handleOverlayClick(event)">
+        <div class="modal-content" id="modal-content">
+            <!-- Content will be injected here -->
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        const currentUser = "{{ session.user }}";
+        window.currentUserRole = "{{ session.role }}";
+        window.currentUsername = "{{ session.user }}";
+        
+        function openModal(contentHtml) {
+            document.getElementById('modal-content').innerHTML = contentHtml;
+            document.getElementById('modal-overlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function handleOverlayClick(e) {
+            if (e.target.id === 'modal-overlay') {
+                closeModal();
+            }
+        }
+    </script>
+    <script src="{{ url_for('static', filename='js/script.js', v=5) }}"></script>
+</body>
+</html>
