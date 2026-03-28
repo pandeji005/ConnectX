@@ -7,9 +7,19 @@ import os
 import uuid
 from authlib.integrations.flask_client import OAuth
 from flask_socketio import SocketIO, emit, join_room, leave_room
+from werkzeug.middleware.proxy_fix import ProxyFix
 from datetime import datetime
+
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'your_secret_key')
+
+# --- Render/Proxy Configuration ---
+# Tell Flask to trust the X-Forwarded-Proto header from the proxy
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+
+# Ensure OAuth works even if the proxy reports HTTP internally
+if os.environ.get('RENDER'):
+    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 socketio = SocketIO(app, cors_allowed_origins="*")
 
