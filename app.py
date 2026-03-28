@@ -1,3 +1,6 @@
+import eventlet
+eventlet.monkey_patch()
+
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, send_file
 from sqlalchemy.exc import IntegrityError
 from flask_sqlalchemy import SQLAlchemy
