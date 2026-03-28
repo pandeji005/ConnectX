@@ -1,12 +1,16 @@
-import eventlet
-eventlet.monkey_patch()
+import os
+
+# --- Render/Production Initialization ---
+# Apply monkey patching ONLY on Render to avoid local Windows/MySQL conflicts
+if os.environ.get('RENDER'):
+    import eventlet
+    eventlet.monkey_patch()
 
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, send_file
 from sqlalchemy.exc import IntegrityError
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import re
-import os
 import uuid
 from authlib.integrations.flask_client import OAuth
 from flask_socketio import SocketIO, emit, join_room, leave_room
@@ -16,7 +20,6 @@ from datetime import datetime
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'your_secret_key')
 
-# --- Render/Proxy Configuration ---
 # Tell Flask to trust the X-Forwarded-Proto header from the proxy
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
