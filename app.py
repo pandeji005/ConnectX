@@ -754,11 +754,9 @@ def upload_file():
         new_file = File(filename=file.filename, filepath=filepath)
         db.session.add(new_file)
         db.session.commit()
-        msg = "File uploaded successfully"
-    else:
-        msg = "No file selected"
+    
+    return redirect(url_for('file_manager'))
 
-    return render_template('upload_file.html', msg=msg)  
 
 @app.route('/upload_page')
 def upload_page():
@@ -766,8 +764,15 @@ def upload_page():
 
 @app.route('/view_files')
 def view_files():
+    return redirect(url_for('file_manager'))
+
+@app.route('/file_manager')
+def file_manager():
+    if 'user' not in session:
+        return redirect(url_for('login'))
     files = File.query.all()
-    return render_template('view_files.html', files=files)
+    return render_template('file_manager.html', files=files)
+
     
 @app.route('/view_file/<int:id>')
 def view_file(id):
@@ -795,7 +800,8 @@ def delete_file(id):
         db.session.delete(file)
         db.session.commit()
 
-    return redirect(url_for('view_files'))
+    return redirect(url_for('file_manager'))
+
 
 @app.route('/global_chat')
 def global_chat():
@@ -902,36 +908,59 @@ def reports_data():
     if 'user' not in session:
         return jsonify({"error": "Unauthorized"}), 403
 
-    # 1. Project Progress
+    # 1. Project Progress & Health
     projects = Project.query.all()
     project_metrics = []
     for p in projects:
         total_tasks = Task.query.filter_by(project_id=p.id).count()
         done_tasks = Task.query.filter_by(project_id=p.id, status='Done').count()
+        overdue_tasks = Task.query.filter(
+            Task.project_id == p.id,
+            Task.status != 'Done',
+            Task.deadline < datetime.now().date()
+        ).count()
+        
         progress = (done_tasks / total_tasks * 100) if total_tasks > 0 else 0
+        
+        # Health Logic
+        health = "On Track"
+        if overdue_tasks > 0: health = "At Risk"
+        if progress < 20 and total_tasks > 5: health = "Delayed"
+
         project_metrics.append({
             "id": p.id,
             "title": p.title,
             "progress": round(progress, 1),
             "total": total_tasks,
-            "done": done_tasks
+            "done": done_tasks,
+            "overdue": overdue_tasks,
+            "health": health
         })
 
-    # 2. Global Status Distribution
+    # 2. Advanced Status & Priority Distribution
     status_counts = {
         "To Do": Task.query.filter_by(status='To Do').count(),
         "In Progress": Task.query.filter_by(status='In Progress').count(),
         "Done": Task.query.filter_by(status='Done').count()
     }
+    
+    priority_counts = {
+        "High": Task.query.filter_by(priority='High').count(),
+        "Medium": Task.query.filter_by(priority='Medium').count(),
+        "Low": Task.query.filter_by(priority='Low').count()
+    }
 
-    # 3. Team Workload
+    # 3. Team Workload (Enhanced)
     users = User.query.filter_by(role='team_member').all()
     workload = []
     for u in users:
-        task_count = Task.query.filter_by(assigned_to=u.id).count()
+        u_tasks = Task.query.filter_by(assigned_to=u.id).all()
+        u_done = sum(1 for t in u_tasks if t.status == 'Done')
         workload.append({
             "username": u.username,
-            "count": task_count
+            "total": len(u_tasks),
+            "completed": u_done,
+            "pending": len(u_tasks) - u_done
         })
 
     # 4. Summary Stats
@@ -945,9 +974,11 @@ def reports_data():
     return jsonify({
         "projects": project_metrics,
         "status_distribution": status_counts,
+        "priority_distribution": priority_counts,
         "workload": workload,
         "summary": summary
     })
+
 
 @app.route('/api/project/<int:project_id>/tasks')
 def get_project_tasks(project_id):
