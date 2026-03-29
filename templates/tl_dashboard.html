@@ -195,7 +195,42 @@
     {% endfor %}
 </div>
 
+{% if is_super_admin %}
+<h3 style="margin-top: 40px; margin-bottom: 16px;">👤 User Management (Super Admin)</h3>
+<div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+        <thead>
+            <tr style="background: var(--hover-bg); border-bottom: 1px solid var(--border-color);">
+                <th style="padding: 12px 15px;">Username</th>
+                <th style="padding: 12px 15px;">Email</th>
+                <th style="padding: 12px 15px;">Role</th>
+                <th style="padding: 12px 15px; text-align: right;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in users %}
+            <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">
+                <td style="padding: 12px 15px; font-weight: 500; color: var(--text-primary);">{{ u.username }}</td>
+                <td style="padding: 12px 15px;">{{ u.email }}</td>
+                <td style="padding: 12px 15px;">
+                    <span style="padding: 2px 8px; border-radius: 12px; font-size: 11px; background: {% if u.role == 'team_leader' %}#e3a008{% else %}#a9a9a9{% endif %}; color: white;">
+                        {{ u.role|replace('_', ' ')|title }}
+                    </span>
+                </td>
+                <td style="padding: 12px 15px; text-align: right;">
+                    <a href="{{ url_for('delete_user', id=u.id) }}" 
+                       onclick="return confirm('Are you sure you want to PERMANENTLY delete user {{ u.username }} and their credentials?');"
+                       style="color: #ff4444; text-decoration: none; font-weight: 500; font-size: 13px;">Delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
 <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border-color); display: flex; gap: 16px;">
+
     <a href="{{ url_for('upload_page') }}" class="btn"
         style="border: 1px solid var(--border-color); background: var(--hover-bg); color: var(--text-color); text-decoration: none;">Upload
         File</a>

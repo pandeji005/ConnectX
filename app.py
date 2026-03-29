@@ -247,12 +247,13 @@ def login():
         if user and check_password_hash(user.password, password):
             session['user'] = user.username
             session['role'] = user.role
-            if user.role == 'team_leader':
+            if user.role in ['team_leader', 'super_admin']:
                 return redirect(url_for('tl_dashboard'))
             else:
                 return redirect(url_for('dashboard'))
         else:
             msg = "Invalid credentials or role mismatch"
+
 
     return render_template('login.html', message=msg)
 
@@ -273,19 +274,60 @@ def google_callback():
     user = User.query.filter_by(email=email).first()
 
     if not user:
-        user = User(
-            username=name,   # auto-fill name
-            email=email,
-            google_id=google_id,
-            role='team_member'  # default role
-        )
-        db.session.add(user)
-        db.session.commit()
+        # First-time Google user: store info in session and redirect to role selection
+        session['google_temp'] = {
+            'email': email,
+            'google_id': google_id,
+            'username': name
+        }
+        return redirect(url_for('google_role_selection'))
 
     session['user'] = user.username
     session['role'] = user.role
 
+    # Redirect based on role
+    if user.role == 'super_admin' or user.role == 'team_leader':
+        return redirect(url_for('tl_dashboard'))
     return redirect(url_for('dashboard'))
+
+@app.route('/google/role-selection', methods=['GET', 'POST'])
+def google_role_selection():
+    if 'google_temp' not in session:
+        return redirect(url_for('login'))
+        
+    if request.method == 'POST':
+        role = request.form.get('role')
+        if role not in ['team_leader', 'team_member']:
+            return "Invalid role selection", 400
+            
+        temp_info = session.pop('google_temp')
+        
+        # Ensure unique username
+        base_username = temp_info['username']
+        username = base_username
+        counter = 1
+        while User.query.filter_by(username=username).first():
+            username = f"{base_username}{counter}"
+            counter += 1
+
+        new_user = User(
+            username=username,
+            email=temp_info['email'],
+            google_id=temp_info['google_id'],
+            role=role
+        )
+        db.session.add(new_user)
+        db.session.commit()
+        
+        session['user'] = new_user.username
+        session['role'] = new_user.role
+        
+        if role == 'team_leader':
+            return redirect(url_for('tl_dashboard'))
+        return redirect(url_for('dashboard'))
+        
+    return render_template('google_role.html', name=session['google_temp']['username'])
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -371,7 +413,13 @@ def tl_dashboard():
         tasks = Task.query.all()
 
     projects = Project.query.all()
-    users = User.query.filter_by(role='team_member').all()
+    
+    # If super_admin, show both leads and members
+    if session.get('role') == 'super_admin':
+        users = User.query.filter(User.role != 'super_admin').all() # don't list other super_admins (though there's only one)
+    else:
+        users = User.query.filter_by(role='team_member').all()
+        
     activities = Activity.query.order_by(Activity.timestamp.desc()).limit(10).all()
 
     return render_template(
@@ -380,8 +428,10 @@ def tl_dashboard():
         projects=projects,
         users=users,
         activities=activities,
-        today=datetime.now().date()
+        today=datetime.now().date(),
+        is_super_admin=(session.get('role') == 'super_admin')
     )
+
 
 @app.route('/members')
 def members():
@@ -600,7 +650,7 @@ def assign_task(id):
 
 @app.route('/delete_task/<int:id>')
 def delete_task(id):
-    if session.get('role') != 'team_leader':
+    if session.get('role') not in ['team_leader', 'super_admin']:
         return "Unauthorized", 403
     task = Task.query.get(id)
     if not task:
@@ -611,6 +661,24 @@ def delete_task(id):
     if project_id:
         return redirect(url_for('project_tasks', project_id=project_id))
     return redirect(url_for('tl_dashboard'))
+
+@app.route('/delete_user/<int:id>')
+def delete_user(id):
+    if session.get('role') != 'super_admin':
+        return "Unauthorized", 403
+        
+    user = User.query.get(id)
+    if not user:
+        return "User not found", 404
+        
+    # Set assigned tasks to unassigned
+    Task.query.filter_by(assigned_to=user.id).update({'assigned_to': None})
+    
+    db.session.delete(user)
+    db.session.commit()
+    
+    return redirect(url_for('tl_dashboard'))
+
 
 @app.route('/workspace')
 def workspace():
@@ -904,6 +972,9 @@ def create_meeting():
     if 'user' not in session:
         return redirect(url_for('home'))
         
+    if session.get('role') not in ['team_leader', 'super_admin']:
+        return "Only Team Leaders can create meetings", 403
+        
     user = User.query.filter_by(username=session['user']).first()
     # Generate random 9-char ID
     new_meeting_id = str(uuid.uuid4())[:9]
@@ -913,6 +984,7 @@ def create_meeting():
     db.session.commit()
     
     return redirect(url_for('meeting_room', room_id=new_meeting_id))
+
 
 @app.route('/join_meeting', methods=['POST'])
 def join_meeting():

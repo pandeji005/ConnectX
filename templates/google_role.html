@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Complete Registration — ConnectX{% endblock %}
+
+{% block content %}
+<div class="auth-bg-pattern"></div>
+<div class="auth-block" style="max-width: 500px;">
+    <h2 class="page-title" style="margin-bottom: 8px;">Welcome, {{ name }}!</h2>
+    <p class="page-subtitle">One last step to set up your account.</p>
+
+    <div class="form-container" style="margin-top: 30px;">
+        <form method="POST">
+            <p style="text-align: center; color: var(--text-muted); font-size: 14px; margin-bottom: 24px;">
+                Please select your role within the project. This cannot be changed later.
+            </p>
+
+            <div class="role-cards" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <label class="role-card">
+                    <input type="radio" name="role" value="team_leader" required>
+                    <div class="role-card-content">
+                        <div class="role-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
+                        </div>
+                        <h3>Team Lead</h3>
+                        <p>Manage projects, assign tasks, and lead meetings.</p>
+                    </div>
+                </label>
+
+                <label class="role-card">
+                    <input type="radio" name="role" value="team_member" required>
+                    <div class="role-card-content">
+                        <div class="role-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        </div>
+                        <h3>Team Member</h3>
+                        <p>Collaborate on projects, complete tasks, and join meetings.</p>
+                    </div>
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary full-width" style="margin-top: 24px; padding: 14px;">Complete Setup</button>
+        </form>
+    </div>
+</div>
+
+<style>
+    .role-cards {
+        margin-bottom: 10px;
+    }
+
+    .role-card {
+        cursor: pointer;
+        position: relative;
+    }
+
+    .role-card input {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+        height: 0;
+        width: 0;
+    }
+
+    .role-card-content {
+        height: 100%;
+        padding: 20px;
+        background: var(--bg-secondary);
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        text-align: center;
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .role-card:hover .role-card-content {
+        border-color: var(--primary-color);
+        background: var(--hover-bg);
+        transform: translateY(-2px);
+    }
+
+    .role-card input:checked + .role-card-content {
+        border-color: var(--primary-color);
+        background: rgba(108, 92, 231, 0.05); /* Assuming primary color is similar */
+        box-shadow: 0 0 0 4px rgba(108, 92, 231, 0.1);
+    }
+
+    .role-icon {
+        width: 48px;
+        height: 48px;
+        background: var(--bg-main);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 12px;
+        color: var(--primary-color);
+    }
+
+    .role-card-content h3 {
+        margin: 0 0 8px 0;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .role-card-content p {
+        margin: 0;
+        font-size: 12px;
+        color: var(--text-muted);
+        line-height: 1.4;
+    }
+
+    /* Active State for SVG icons */
+    .role-card input:checked + .role-card-content .role-icon {
+        background: var(--primary-color);
+        color: white;
+    }
+</style>
+{% endblock %}

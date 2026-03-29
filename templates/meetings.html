@@ -9,6 +9,7 @@
     <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 30px; margin-top: 30px;">
         <!-- Start/Join Actions -->
         <div style="display: flex; flex-direction: column; gap: 24px;">
+            {% if session.get('role') in ['team_leader', 'super_admin'] %}
             <div class="glass-card" style="padding: 30px; border-radius: 16px; background: rgba(35, 131, 226, 0.05); border: 1px solid rgba(35, 131, 226, 0.2);">
                 <div style="display: flex; align-items: flex-start; gap: 20px;">
                     <div style="padding: 12px; border-radius: 12px; background: #2383e2; color: white;">
@@ -26,6 +27,8 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
+
 
             <div class="glass-card" style="padding: 30px; border-radius: 16px;">
                 <h3 style="margin: 0 0 20px 0; color: var(--text-color);">Join with ID</h3>
