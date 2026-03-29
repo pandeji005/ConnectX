@@ -189,7 +189,16 @@ with app.app_context():
         db.session.execute(db.text('ALTER TABLE files ADD COLUMN task_id INT'))
     except Exception:
         db.session.rollback()
+    
+    # --- Auto-promote Super Admin via Env Var (Render fix for Shell access) ---
+    sa_username = os.environ.get('SUPER_ADMIN_USERNAME')
+    if sa_username:
+        sa_user = User.query.filter_by(username=sa_username).first()
+        if sa_user:
+            sa_user.role = 'super_admin'
+            
     db.session.commit()
+
 
 # --- Socket.io Events for Meetings ---
 @socketio.on('join_meeting')
