@@ -248,20 +248,23 @@ def login():
         password = request.form.get("password")
         role = request.form.get("role")
         
-        user = User.query.filter_by(
-            username=username,
-            role=role
-        ).first()
+        user = User.query.filter_by(username=username).first()
 
         if user and check_password_hash(user.password, password):
-            session['user'] = user.username
-            session['role'] = user.role
-            if user.role in ['team_leader', 'super_admin']:
-                return redirect(url_for('tl_dashboard'))
+            # If user is super_admin, they can bypass the specific role match.
+            # Otherwise, the chosen role must match the database role.
+            if user.role != role and user.role != 'super_admin':
+                 msg = "Invalid credentials or role mismatch"
             else:
-                return redirect(url_for('dashboard'))
+                 session['user'] = user.username
+                 session['role'] = user.role
+                 if user.role in ['team_leader', 'super_admin']:
+                     return redirect(url_for('tl_dashboard'))
+                 else:
+                     return redirect(url_for('dashboard'))
         else:
             msg = "Invalid credentials or role mismatch"
+
 
 
     return render_template('login.html', message=msg)
