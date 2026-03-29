@@ -17,6 +17,16 @@
     </script>
     <!-- ApexCharts for Reports -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        .status-overdue { color: #ff4444 !important; }
+        .status-due-today { color: #e3a008 !important; }
+        /* For the project workspace table */
+        .workspace-status-overdue { color: #ff5a5f !important; }
+        /* Role badges */
+        .badge-tl { background-color: #e3a008 !important; color: white !important; }
+        .badge-tm { background-color: #a9a9a9 !important; color: white !important; }
+        .badge-admin { background-color: #00e5ff !important; color: black !important; font-weight: 700 !important; border-radius: 4px; padding: 1px 4px; }
+    </style>
 </head>
 <body>
     <!-- Inline anti-flicker for body -->
@@ -110,7 +120,7 @@
                             <span class="dropdown-user-name">{{ session.user }}</span>
                             <span class="dropdown-user-role">
                                 {% if session.role == 'super_admin' %}
-                                    Super Admin
+                                    <span class="role-pill badge-admin">Admin</span>
                                 {% elif session.role == 'team_leader' %}
                                     Team Lead
                                 {% else %}

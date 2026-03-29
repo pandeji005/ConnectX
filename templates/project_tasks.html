@@ -21,7 +21,10 @@
     <h3 style="font-size: 18px; font-weight: 600; color: var(--text-color);">Project Tasks</h3>
     {% if session['role'] == 'team_leader' %}
     <div style="display: flex; gap: 8px;">
-        <button onclick="showAddTaskModal()" class="btn btn-primary" style="font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 6px; display: flex; align-items: center; gap: 6px; border: none; cursor: pointer; font-family: inherit;">
+        <button onclick="showAddTaskModal(this.dataset.projectId, this.dataset.redirectTo)" 
+                data-project-id="{{ project.id }}" 
+                data-redirect-to="{{ url_for('project_tasks', project_id=project.id) }}"
+                class="btn btn-primary" style="font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 6px; display: flex; align-items: center; gap: 6px; border: none; cursor: pointer; font-family: inherit;">
             <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             Add Task
         </button>
@@ -54,6 +57,13 @@
                 <td style="padding: 16px;">
                     <div style="font-weight: 600; font-size: 15px; color: var(--text-color);">{{ task.title }}</div>
                     <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 300px;">{{ task.description or 'No description provided.' }}</div>
+                    {% if task.deadline %}
+                    <div style="font-size: 11px; margin-top: 6px; display: flex; align-items: center; gap: 4px;" 
+                         class="{% if task.deadline < today %}workspace-status-overdue{% elif task.deadline == today %}status-due-today{% else %}var(--text-muted){% endif %}">
+                        <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        Due: {{ task.deadline }} {% if task.due_time %}at {{ task.due_time }}{% endif %}
+                    </div>
+                    {% endif %}
                 </td>
                 <td style="padding: 16px;">
                     <div style="display: flex; align-items: center; gap: 8px;">
@@ -119,57 +129,6 @@
 </div>
 
 <script>
-    function showAddTaskModal() {
-        const content = `
-            <div class="modal-header">
-                <h3>Create New Task</h3>
-                <button class="modal-close" onclick="closeModal()">&times;</button>
-            </div>
-            <form action="{{ url_for('create_task') }}" method="POST">
-                <input type="hidden" name="project_id" value="{{ project.id }}">
-                <input type="hidden" name="redirect_to" value="{{ url_for('project_tasks', project_id=project.id) }}">
-                <div class="modal-body">
-                    <div class="modal-form-group">
-                        <label>Task Title</label>
-                        <input type="text" name="title" class="modal-input" placeholder="e.g. Design Landing Page" required>
-                    </div>
-                    <div class="modal-form-group">
-                        <label>Assign to (Optional)</label>
-                        <select name="assigned_to" class="modal-input">
-                            <option value="">Unassigned</option>
-                            {% for u in users %}
-                            <option value="{{ u.id }}">{{ u.username }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                        <div class="modal-form-group">
-                            <label>Priority</label>
-                            <select name="priority" class="modal-input">
-                                <option value="Low">Low</option>
-                                <option value="Medium">Medium</option>
-                                <option value="High">High</option>
-                            </select>
-                        </div>
-                        <div class="modal-form-group">
-                            <label>Deadline</label>
-                            <input type="date" name="deadline" class="modal-input">
-                        </div>
-                    </div>
-                    <div class="modal-form-group">
-                        <label>Description</label>
-                        <textarea name="description" class="modal-input modal-textarea" placeholder="Detail the task..."></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline" onclick="closeModal()" style="border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 16px; cursor: pointer;">Cancel</button>
-                    <button type="submit" class="btn btn-primary" style="border: none; border-radius: 6px; padding: 8px 16px; cursor: pointer;">Add Task</button>
-                </div>
-            </form>
-        `;
-        openModal(content);
-    }
-
     function showAssignMemberModal(taskId, taskTitle) {
         const content = `
             <div class="modal-header">

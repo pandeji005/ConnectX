@@ -12,9 +12,23 @@
             <label style="font-weight: 500; font-size: 14px; margin-bottom: 6px; display: block;">Description</label>
             <textarea name="description" rows="4" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-color); resize: vertical;">{{ task.description }}</textarea>
         </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div>
+                <label style="font-weight: 500; font-size: 14px; margin-bottom: 6px; display: block;">Deadline Date</label>
+                <input type="date" name="deadline" value="{{ task.deadline }}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-color);">
+            </div>
+            <div>
+                <label style="font-weight: 500; font-size: 14px; margin-bottom: 6px; display: block;">Due Time</label>
+                <input type="time" name="due_time" value="{{ task.due_time }}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-color);">
+            </div>
+        </div>
         <div>
             <label style="font-weight: 500; font-size: 14px; margin-bottom: 6px; display: block;">Priority</label>
-            <input type="text" name="priority" value="{{ task.priority }}" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-color);">
+            <select name="priority" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-color);">
+                <option value="Low" {% if task.priority == 'Low' %}selected{% endif %}>Low</option>
+                <option value="Medium" {% if task.priority == 'Medium' %}selected{% endif %}>Medium</option>
+                <option value="High" {% if task.priority == 'High' %}selected{% endif %}>High</option>
+            </select>
         </div>
         <div style="display: flex; gap: 12px; margin-top: 8px;">
             <button type="submit" class="btn btn-primary" style="flex: 1;">Save Changes</button>

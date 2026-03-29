@@ -488,7 +488,7 @@ function closeMentionDropdown() {
     mentionStart = -1;
 }
 
-function showAddTaskModal() {
+function showAddTaskModal(projectId = null, redirectTo = null) {
     // Fetch users and projects first to populate selects
     Promise.all([
         fetch('/users_list').then(r => r.json()),
@@ -496,7 +496,12 @@ function showAddTaskModal() {
     ]).then(([users, reportsData]) => {
         const projects = reportsData.projects;
         let userOpts = users.map(u => `<option value="${u.id}">${u.username}</option>`).join('');
-        let projectOpts = projects.map(p => `<option value="${p.id}">${p.title}</option>`).join('');
+        let projectOpts = projects.map(p => {
+            const selected = (projectId && p.id == projectId) ? 'selected' : '';
+            return `<option value="${p.id}" ${selected}>${p.title}</option>`;
+        }).join('');
+        
+        const redirectInput = redirectTo ? `<input type="hidden" name="redirect_to" value="${redirectTo}">` : '';
 
         const content = `
             <div class="modal-header">
@@ -504,6 +509,7 @@ function showAddTaskModal() {
                 <button class="modal-close" onclick="closeModal()">&times;</button>
             </div>
             <form action="/create_task" method="POST">
+                ${redirectInput}
                 <div class="modal-body">
                     <div class="modal-form-group">
                         <label>Task Title</label>
@@ -515,13 +521,34 @@ function showAddTaskModal() {
                     </div>
                     <div style="display: flex; gap: 12px; margin-bottom: 16px;">
                         <div style="flex: 1;">
-                            <label style="display:block; margin-bottom:6px; font-size:12px; font-weight:600;">Assign To</label>
-                            <select name="assigned_to" class="modal-input" required>${userOpts}</select>
+                            <label style="display:block; margin-bottom:6px; font-size:12px; font-weight:600;">Assign To (Optional)</label>
+                            <select name="assigned_to" class="modal-input">
+                                <option value="">Unassigned</option>
+                                ${userOpts}
+                            </select>
                         </div>
                         <div style="flex: 1;">
                             <label style="display:block; margin-bottom:6px; font-size:12px; font-weight:600;">Project</label>
                             <select name="project_id" class="modal-input">${projectOpts}</select>
                         </div>
+                    </div>
+                    <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                        <div style="flex: 1;">
+                            <label style="display:block; margin-bottom:6px; font-size:12px; font-weight:600;">Deadline</label>
+                            <input type="date" name="deadline" class="modal-input">
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="display:block; margin-bottom:6px; font-size:12px; font-weight:600;">Due Time</label>
+                            <input type="time" name="due_time" class="modal-input">
+                        </div>
+                    </div>
+                    <div class="modal-form-group">
+                        <label>Priority</label>
+                        <select name="priority" class="modal-input">
+                            <option value="Low">Low</option>
+                            <option value="Medium" selected>Medium</option>
+                            <option value="High">High</option>
+                        </select>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -535,26 +562,38 @@ function showAddTaskModal() {
 }
 
 function showDeleteTaskModal() {
-    const content = `
-        <div class="modal-header">
-            <h3>Delete Task</h3>
-            <button class="modal-close" onclick="closeModal()">&times;</button>
-        </div>
-        <form onsubmit="event.preventDefault(); window.location.href='/delete_task/' + document.getElementById('task-id-del').value;">
-            <div class="modal-body">
-                <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">Please enter the Task ID you wish to permanently remove.</p>
-                <div class="modal-form-group">
-                    <label>Task ID</label>
-                    <input type="number" id="task-id-del" class="modal-input" placeholder="e.g. 5" required>
+    fetch('/api/tasks').then(r => r.json()).then(tasks => {
+        if (!tasks.length) {
+            addBotMessage("⚠️ You don't have any tasks that can be deleted.");
+            return;
+        }
+
+        let taskOpts = tasks.map(t => `<option value="${t.id}">[ID: ${t.id}] ${t.title} (${t.status})</option>`).join('');
+
+        const content = `
+            <div class="modal-header">
+                <h3>Delete Task</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <form onsubmit="event.preventDefault(); if(confirm('Are you sure you want to delete this task?')) window.location.href='/delete_task/' + document.getElementById('task-id-del').value;">
+                <div class="modal-body">
+                    <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">Please select the task you wish to permanently remove.</p>
+                    <div class="modal-form-group">
+                        <label>Select Task</label>
+                        <select id="task-id-del" class="modal-input" required>
+                            <option value="" disabled selected>Choose a task...</option>
+                            ${taskOpts}
+                        </select>
+                    </div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>
-                <button type="submit" class="btn btn-danger" style="background:#ff4444; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;">Delete Permanently</button>
-            </div>
-        </form>
-    `;
-    openModal(content);
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-danger" style="background:#ff4444; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;">Delete Permanently</button>
+                </div>
+            </form>
+        `;
+        openModal(content);
+    });
 }
 function showViewProjectTasksModal() {
     fetch('/api/reports/data').then(r => r.json()).then(data => {

@@ -124,6 +124,7 @@ class Task(db.Model):
     assigned_to = db.Column(db.Integer)
     project_id = db.Column(db.Integer)
     tags = db.Column(db.String(255), nullable=True)
+    due_time = db.Column(db.String(10), nullable=True)
 
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
@@ -187,6 +188,11 @@ with app.app_context():
         db.session.rollback()
     try:
         db.session.execute(db.text('ALTER TABLE files ADD COLUMN task_id INT'))
+    except Exception:
+        db.session.rollback()
+    
+    try:
+        db.session.execute(db.text('ALTER TABLE tasks ADD COLUMN due_time VARCHAR(10)'))
     except Exception:
         db.session.rollback()
     
@@ -441,7 +447,8 @@ def tl_dashboard():
         users=users,
         activities=activities,
         today=datetime.now().date(),
-        is_super_admin=(session.get('role') == 'super_admin')
+        is_super_admin=(session.get('role') == 'super_admin'),
+        user_map={u.id: u.username for u in User.query.all()}
     )
 
 
@@ -575,6 +582,7 @@ def create_task():
         description=request.form.get('description'),
         priority=request.form.get('priority'),
         deadline=request.form.get('deadline'),
+        due_time=request.form.get('due_time'),
         assigned_to=assigned_to,
         project_id=request.form.get('project_id')
     )
@@ -625,6 +633,7 @@ def edit_task(id):
         task.description = request.form.get('description')
         task.priority = request.form.get('priority')
         task.deadline = request.form.get('deadline')
+        task.due_time = request.form.get('due_time')
 
         db.session.commit()
         if task.project_id:
@@ -891,11 +900,32 @@ def mark_all_notifications_read():
 
 @app.route('/users_list')
 def users_list():
-    """API endpoint for @mention autocomplete in global chat."""
+    """API endpoint for @mention autocomplete and task assignment."""
     if 'user' not in session:
         return jsonify([])
-    users = User.query.with_entities(User.id, User.username).all()
+    # Only return team members for task assignment
+    users = User.query.filter_by(role='team_member').with_entities(User.id, User.username).all()
     return jsonify([{'id': u.id, 'username': u.username} for u in users])
+
+@app.route('/api/tasks')
+def get_all_tasks():
+    """API endpoint to get all tasks (filtered by role) for chatbot dropdown."""
+    if 'user' not in session:
+        return jsonify([])
+    
+    role = session.get('role')
+    user = User.query.filter_by(username=session['user']).first()
+    
+    if role in ['team_leader', 'super_admin']:
+        tasks = Task.query.all()
+    else:
+        tasks = Task.query.filter_by(assigned_to=user.id).all()
+        
+    return jsonify([{
+        'id': t.id,
+        'title': t.title,
+        'status': t.status
+    } for t in tasks])
 
 @app.route('/reports')
 def reports():
