@@ -723,7 +723,7 @@ def project_tasks(project_id):
     all_users = User.query.all()
     user_map = {u.id: u.username for u in all_users}
     
-    return render_template('project_tasks.html', project=project, tasks=tasks, users=members, user_map=user_map)
+    return render_template('project_tasks.html', project=project, tasks=tasks, users=members, user_map=user_map, today=datetime.now().date())
 
 @app.route('/notifications/clear', methods=['POST'])
 def clear_notifications():

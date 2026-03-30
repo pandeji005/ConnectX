@@ -59,7 +59,7 @@
                     <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 300px;">{{ task.description or 'No description provided.' }}</div>
                     {% if task.deadline %}
                     <div style="font-size: 11px; margin-top: 6px; display: flex; align-items: center; gap: 4px;" 
-                         class="{% if task.deadline < today %}workspace-status-overdue{% elif task.deadline == today %}status-due-today{% else %}var(--text-muted){% endif %}">
+                         class="{% if task.deadline < (today or task.deadline) %}workspace-status-overdue{% elif task.deadline == today %}status-due-today{% else %}var(--text-muted){% endif %}">
                         <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                         Due: {{ task.deadline }} {% if task.due_time %}at {{ task.due_time }}{% endif %}
                     </div>
@@ -67,9 +67,10 @@
                 </td>
                 <td style="padding: 16px;">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        {% if task.assigned_to and user_map[task.assigned_to] %}
-                        <div style="width: 24px; height: 24px; border-radius: 50%; background: #2383e2; display: flex; align-items: center; justify-content: center; font-size: 10px; color: white; font-weight: 700;">{{ user_map[task.assigned_to][0]|upper }}</div>
-                        <span style="font-size: 13px; color: var(--text-color);">{{ user_map[task.assigned_to] }}</span>
+                        {% set assignee_name = user_map.get(task.assigned_to) %}
+                        {% if task.assigned_to and assignee_name %}
+                        <div style="width: 24px; height: 24px; border-radius: 50%; background: #2383e2; display: flex; align-items: center; justify-content: center; font-size: 10px; color: white; font-weight: 700;">{{ assignee_name[0]|upper }}</div>
+                        <span style="font-size: 13px; color: var(--text-color);">{{ assignee_name }}</span>
                         {% else %}
                         <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--hover-bg); border: 1px dashed var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--text-muted);">?</div>
                         <span style="font-size: 13px; color: var(--text-muted); font-style: italic;">Unassigned</span>
